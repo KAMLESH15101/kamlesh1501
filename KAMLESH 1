@@ -1,0 +1,118 @@
+<?php
+// Theme setup
+function my_theme_setup() {
+  add_theme_support('title-tag');
+  register_nav_menu('header', 'Header Menu');
+  register_nav_menu('footer', 'Footer Menu');
+}
+add_action('after_setup_theme', 'my_theme_setup');
+
+// Enqueue styles and scripts
+function my_enqueue_styles() {
+  wp_enqueue_style('style', get_stylesheet_uri());
+  wp_enqueue_style('bootstrap', get_template_directory_uri() . '/css/bootstrap.css');
+}
+add_action('wp_enqueue_scripts', 'my_enqueue_styles');
+
+function my_enqueue_scripts() {
+  wp_enqueue_script('jquery');
+  wp_enqueue_script('script', get_template_directory_uri() . '/js/script.js', array('jquery'));
+}
+add_action('wp_enqueue_scripts', 'my_enqueue_scripts');
+
+// Custom post type
+function my_custom_post_type() {
+  $labels = array(
+    'name' => 'Books',
+    'singular_name' => 'Book'
+  );
+  $args = array(
+    'labels' => $labels,
+    'public' => true,
+    'has_archive' => true
+  );
+  register_post_type('book', $args);
+}
+add_action('init', 'my_custom_post_type');
+
+// Custom meta box
+function my_meta_box() {
+  add_meta_box(
+    'my_meta_box',
+    'Book Details',
+    'my_meta_box_callback',
+    'book',
+    'advanced',
+    'high'
+  );
+}
+add_action('add_meta_boxes', 'my_meta_box');
+
+function my_meta_box_callback($post) {
+  $book_title = get_post_meta($post->ID, 'book_title', true);
+  $book_author = get_post_meta($post->ID, 'book_author', true);
+  ?>
+  <p>
+    <label for="book_title">Title:</label>
+    <input type="text" name="book_title" value="<?php echo $book_title; ?>">
+  </p>
+  <p>
+    <label for="book_author">Author:</label>
+    <input type="text" name="book_author" value="<?php echo $book_author; ?>">
+  </p>
+  <?php
+}
+
+// Save meta box data
+function my_save_meta_box_data($post_id) {
+  if (isset($_POST['book_title'])) {
+    update_post_meta($post_id, 'book_title', sanitize_text_field($_POST['book_title']));
+  }
+  if (isset($_POST['book_author'])) {
+    update_post_meta($post_id, 'book_author', sanitize_text_field($_POST['book_author']));
+  }
+}
+add_action('save_post', 'my_save_meta_box_data');
+
+plugin.php
+
+<?php
+/*
+Plugin Name: My Plugin
+Description: A plugin that does something cool
+*/
+
+function my_plugin_init() {
+  // Code to run when the plugin is initialized
+}
+add_action('init', 'my_plugin_init');
+
+function my_plugin_create_table() {
+  global $wpdb;
+  $table_name = $wpdb->prefix . 'my_table';
+  $charset = $wpdb->get_charset_collate();
+  $sql = "CREATE TABLE $table_name (
+    id int(11) NOT NULL AUTO_INCREMENT,
+    name varchar(255) NOT NULL,
+    email varchar(255) NOT NULL,
+    PRIMARY KEY (id)
+  ) $charset;";
+  require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+  dbDelta($sql);
+}
+register_activation_hook(__FILE__, 'my_plugin_create_table');
+
+page-template.php
+
+<?php
+/* Template Name: My Page Template */
+get_header();
+?>
+
+<div id="content">
+  <h1><?php the_title(); ?></h1>
+  <?php the_content(); ?>
+</div>
+
+<?php
+get_footer();M  
